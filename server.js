@@ -54,7 +54,9 @@ app.use((err, req, res, next) => {
     const errBody = Object.assign({}, err, { message: err.message });
     res.status(err.status).json(errBody);
   } else {
-    console.log(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });

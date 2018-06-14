@@ -15,7 +15,9 @@ router.use('/', passport.authenticate('jwt', { session: false, failWithError: tr
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
 
-  Tag.find()
+  const userId = req.user.id;
+
+  Tag.find({userId})
     .sort('name')
     .then(results => {
       res.json(results);
@@ -27,7 +29,9 @@ router.get('/', (req, res, next) => {
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
+
   const { id } = req.params;
+  const userId = req.user.id;
 
   /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -36,7 +40,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Tag.findById(id)
+  Tag.findOne({_id: id, userId})
     .then(result => {
       if (result) {
         res.json(result);
@@ -51,9 +55,10 @@ router.get('/:id', (req, res, next) => {
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/', (req, res, next) => {
-  const { name } = req.body;
 
-  const newTag = { name };
+  const { name } = req.body;
+  const userId = req.user.id;
+  const newTag = { name , userId};
 
   /***** Never trust users - validate input *****/
   if (!name) {
@@ -77,7 +82,9 @@ router.post('/', (req, res, next) => {
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/:id', (req, res, next) => {
+
   const { id } = req.params;
+  const userId = req.user.id;
   const { name } = req.body;
 
   /***** Never trust users - validate input *****/
@@ -93,9 +100,9 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateTag = { name };
+  const updateTag = { name};
 
-  Tag.findByIdAndUpdate(id, updateTag, { new: true })
+  Tag.findOneAndUpdate({_id: id, userId}, updateTag, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -114,6 +121,8 @@ router.put('/:id', (req, res, next) => {
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
+
+  const userId = req.user.id;
   const { id } = req.params;
 
   /***** Never trust users - validate input *****/
@@ -123,21 +132,29 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const tagRemovePromise = Tag.findByIdAndRemove(id);
+  const tagRemovePromise = Tag.findOneAndRemove({_id: id, userId});
 
   const noteUpdatePromise = Note.updateMany(
-    { tags: id, },
+    { tags: id, userId },
     { $pull: { tags: id } }
   );
 
-  Promise.all([tagRemovePromise, noteUpdatePromise])
+  Tag.findOne({_id: id, userId}).count()
+    .then(count => {
+      if (!count) {
+        const err = new Error('The `id` is not found');
+        err.status = 404;
+        return Promise.reject(err);
+      }
+      return Promise.all([tagRemovePromise, noteUpdatePromise]);
+    })
     .then(() => {
       res.sendStatus(204).end();
     })
     .catch(err => {
       next(err);
     });
-
+  
 });
 
 module.exports = router;
