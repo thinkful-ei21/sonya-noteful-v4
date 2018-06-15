@@ -67,7 +67,7 @@ describe('Noteful API - Users', function () {
           .then(isValid => {
             expect(isValid).to.be.true;
           });
-      });
+      });   
 
       it('Should reject users with missing username', function () {
         const testUser = { password, fullname };
