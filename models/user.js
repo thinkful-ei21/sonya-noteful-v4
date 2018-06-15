@@ -9,9 +9,6 @@ const userSchema = new mongoose.Schema({
   password: { type:String,required: true}
 });
 
-// Add `createdAt` and `updatedAt` fields
-userSchema.set('timestamps', true);
-
 // Customize output for `res.json(data)`, `console.log(data)` etc.
 userSchema.set('toObject', {
   virtuals: true,     // include built-in virtual `id`

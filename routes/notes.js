@@ -36,10 +36,18 @@ function validateTagIds(tags, userId) {
     err.status = 400;
     return Promise.reject(err);
   }
+  if (tags) {
+    const badIds = tags.filter((tag) => !mongoose.Types.ObjectId.isValid(tag));
+    if (badIds.length) {
+      const err = new Error('The tags `id` is not valid');
+      err.status = 400;
+      return Promise.reject(err);
+    }
+  }
   return Tag.find({ $and: [{ _id: { $in: tags }, userId }] })
     .then(results => {
       if (tags.length !== results.length) {
-        const err = new Error('The `tags` array contains an invalid id');
+        const err = new Error('The tags `id` is not valid');
         err.status = 400;
         return Promise.reject(err);
       }
@@ -134,17 +142,6 @@ router.post('/', (req, res, next) => {
     validateFolderId(folderId, userId),
     validateTagIds(tags, userId)
   ])
-    .catch(err => {
-      if (err === 'InvalidFolder') {
-        err = new Error('The folder is not valid');
-        err.status = 400;
-      }
-      if (err === 'InvalidTag') {
-        err = new Error('The tag is not valid');
-        err.status = 400;
-      }
-      next(err);
-    })
     .then(() => Note.create(newNote))
     .then(result => {
       res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
@@ -183,19 +180,8 @@ router.put('/:id', (req, res, next) => {
     validateFolderId(folderId, userId),
     validateTagIds(tags, userId)
   ])
-    .catch(err => {
-      if (err === 'InvalidFolder') {
-        err = new Error('The folder is not valid');
-        err.status = 400;
-      }
-      if (err === 'InvalidTag') {
-        err = new Error('The tag is not valid');
-        err.status = 400;
-      }
-      next(err);
-    })
     .then(() => {
-      return Note.findByIdAndUpdate(id, updateNote, { new: true })
+      return Note.findOneAndUpdate({_id: id, userId: userId}, updateNote, { new: true })
         .populate('tags');
     })
     .then(result => {

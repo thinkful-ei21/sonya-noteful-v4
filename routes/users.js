@@ -8,7 +8,7 @@ const router = express.Router();
 
 //post endpoint to insert new  users
 router.post('/', (req, res, next) => {
-
+  console.log(req.body);
   const requiredFields = ['username', 'password'];
   const missingField = requiredFields.find(field => !(field in req.body));
 
@@ -24,7 +24,7 @@ router.post('/', (req, res, next) => {
   );
 
   if (nonStringField) {
-    const err = new Error(`Missing '${missingField}' in request body`);
+    const err = new Error(`The '${nonStringField}' must be a string`);
     err.status = 422;
     return next(err);
   }
@@ -86,7 +86,7 @@ router.post('/', (req, res, next) => {
       if(count > 0) {
         //there is an existing user with the same username
         return Promise.reject({
-          code: 422,
+          status: 422,
           reason: 'ValidationError',
           message: 'Username already taken',
           location: 'username'
