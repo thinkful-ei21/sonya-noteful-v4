@@ -9,7 +9,8 @@ const Folder = require('../models/folder');
 const Tag = require('../models/tag');
 
 function validateFolderId(folderId, userId) {
-  if (folderId === undefined) {
+  if (folderId === undefined || folderId === '') {
+    console.log(folderId);
     return Promise.resolve();
   }
   if (!mongoose.Types.ObjectId.isValid(folderId)) {
@@ -128,6 +129,7 @@ router.get('/:id', (req, res, next) => {
 router.post('/', (req, res, next) => {
   const { title, content, folderId, tags = [] } = req.body;
   const userId = req.user.id;
+  console.log(folderId);
 
   /***** Never trust users - validate input *****/
   if (!title) {
@@ -136,7 +138,13 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
-  const newNote = {userId, title, content, folderId, tags};
+  const newNote = {
+    userId,
+    title,
+    content,
+    folderId: folderId === '' ? null : folderId,
+    tags
+  };
 
   Promise.all([
     validateFolderId(folderId, userId),
