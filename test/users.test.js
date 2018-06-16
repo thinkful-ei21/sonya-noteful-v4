@@ -23,9 +23,9 @@ describe('Noteful API - Users', function () {
       .then(() => mongoose.connection.db.dropDatabase());
   });
 
-  // beforeEach(function () {
-  //   return User.createIndexes();
-  // });
+  beforeEach(function () {
+    return User.createIndexes();
+  });
 
   afterEach(function () {
     return mongoose.connection.db.dropDatabase();
