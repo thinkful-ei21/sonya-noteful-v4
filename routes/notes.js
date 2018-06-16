@@ -161,9 +161,17 @@ router.post('/', (req, res, next) => {
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/:id', (req, res, next) => {
+  
   const { id } = req.params;
   const { title, content, folderId, tags = [] } = req.body;
   const userId = req.user.id;
+
+  const updateNote = { 
+    title, 
+    content, 
+    folderId,
+    tags 
+  };
 
   /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -181,9 +189,7 @@ router.put('/:id', (req, res, next) => {
   if (mongoose.Types.ObjectId.isValid(folderId)) {
     updateNote.folderId = folderId;
   }
-
-  const updateNote = { title, content, folderId, tags };
-
+  
   Promise.all([
     validateFolderId(folderId, userId),
     validateTagIds(tags, userId)
